@@ -1,0 +1,29 @@
+.app {
+    display: flex;
+    height: 100vh; /* Asegura que ocupe toda la altura de la pantalla */
+    width: 100vw; /* Asegura que ocupe todo el ancho de la pantalla */
+    overflow: hidden; /* Evita que haya desbordamientos visuales */
+  }
+  
+  .sidebar {
+    width: 250px; /* Ancho fijo del sidebar */
+    padding: 20px;
+    position: fixed; /* Mantiene el sidebar fijo en la parte izquierda */
+    top: 0;
+    left: 0;
+    height: 100vh; /* Ocupa toda la altura de la ventana */
+    z-index: 1000; /* Mantiene el sidebar por encima del contenido */
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Sombra para el sidebar */
+  }
+  
+  .main-content {
+    flex-grow: 1; /* Hace que el main-content ocupe todo el espacio disponible */
+    margin-left: 250px; /* Respeta el ancho del sidebar */
+    padding: 20px; /* Añade un padding interno para no pegarlo a los bordes */
+    height: 100vh; /* Ocupa toda la altura de la ventana */
+    overflow-y: auto; /* Permite scroll si el contenido es largo */
+    box-sizing: border-box; /* Asegura que el padding no afecte el tamaño total */
+  }
+  
+  
+  
