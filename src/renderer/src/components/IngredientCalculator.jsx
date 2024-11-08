@@ -249,9 +249,6 @@ const IngredientCalculator = () => {
     }
   };
   
-  
-  
-
   return (
     <Space direction="vertical" size="large" style={{ width: '100%', padding: '20px' }}>
       <Card>
