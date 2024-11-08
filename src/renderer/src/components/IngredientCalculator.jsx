@@ -18,6 +18,8 @@ import {
   PrinterOutlined,
   WarningOutlined
 } from '@ant-design/icons';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -40,22 +42,18 @@ const IngredientCalculator = () => {
   const loadRecipes = async () => {
     try {
       const recipesData = await window.api.database.getRecipes();
-      //console.log('Recipes loaded:', recipesData); // muestra 
       setRecipes(recipesData);
     } catch (error) {
-      //console.error('Error loading recipes:', error);
-      message.error('Error al cargar las Lineas');
+      message.error('Error al cargar las recetas');
     }
   };
 
   const loadLines = async () => {
     try {
       const linesData = await window.api.database.getProductionLines();
-      //console.log('Recipes loaded:', recipesData); // muestra 
       setLines(linesData);
     } catch (error) {
-      //console.error('Error loading recipes:', error);
-      message.error('Error al cargar las recetas');
+      message.error('Error al cargar las líneas de producción');
     }
   };
 
@@ -109,18 +107,11 @@ const IngredientCalculator = () => {
   ];
 
   const calculateIngredients = async (recipeId, quantity) => {
-    //console.log('Calculating ingredients for recipe:', recipeId, 'quantity:', quantity);
     try {
       setLoading(true);
-
-      // Obtener la receta y sus ingredientes
-
       const recipe = await window.api.database.getRecipeById(recipeId);
-      //console.log('Recipe fetched:', recipe);
       const recipeIngredients = await window.api.database.getRecipeIngredients(recipeId);
-      //console.log('Recipe ingredients fetched:', recipeIngredients);
 
-      // Obtener información actualizada de stock para cada ingrediente
       const calculatedIngs = await Promise.all(
         recipeIngredients.map(async (ing) => {
           const ingredient = await window.api.database.getIngredientById(ing.ingredient_id);
@@ -137,18 +128,11 @@ const IngredientCalculator = () => {
         })
       );
 
-
       setCalculatedIngredients(calculatedIngs);
-
-      // Verificar alertas de stock
-      const alerts = calculatedIngs.filter(ing =>
-        ing.current_stock < ing.required_quantity
-      );
+      const alerts = calculatedIngs.filter(ing => ing.current_stock < ing.required_quantity);
       setStockAlerts(alerts);
       setSelectedRecipe(recipe);
-
     } catch (error) {
-      //console.error('Error calculating ingredients:', error);
       message.error('Error al calcular ingredientes');
     } finally {
       setLoading(false);
@@ -171,87 +155,102 @@ const IngredientCalculator = () => {
 
   const handleSaveCalculation = async () => {
     try {
-      const values = await form.validateFields();
-
-      // Generar número de lote (puedes adaptarlo según tus necesidades)
-      const batchNumber = `BATCH-${Date.now()}`;
-
-      // Obtener fecha y hora actual
-      const currentDate = new Date();
-
-      // Estimar tiempo de finalización (por ejemplo, 2 horas después)
-      const estimatedEndTime = new Date(currentDate.getTime() + (2 * 60 * 60 * 1000));
-
-      // Crear un nuevo proceso de producción con todos los campos requeridos
-      const processData = {
-        batch_number: batchNumber,
-        recipe_id: values.recipe,
-        operator_id: 1, // Deberías obtener esto de algún sistema de autenticación
-        line_id: 1, // Deberías permitir seleccionar la línea de producción
-        quantity: values.quantity,
-        unit: selectedRecipe.base_unit,
-        start_time: currentDate.toISOString(),
-        estimated_end_time: estimatedEndTime.toISOString(),
-        status: 'pending',
-        priority: 'normal',
-        temperature: 25, // Valores por defecto o deberías permitir ingresarlos
-        humidity: 50 // Valores por defecto o deberías permitir ingresarlos
+      // Crear un objeto con los datos de la receta y los ingredientes
+      const savedCalculations = {
+        id: Date.now(), // Generar un ID único basado en la marca de tiempo
+        timestamp: new Date().toISOString(), // Marca de tiempo en formato ISO
+        recipe: selectedRecipe,
+        ingredients: calculatedIngredients,
+        quantity: form.getFieldValue('quantity'),
       };
-
-      const newProcess = await window.api.database.addProductionProcess(processData);
-
-      // Agregar los ingredientes calculados al proceso
-      for (const ingredient of calculatedIngredients) {
-        await window.api.database.addProcessIngredient({
-          process_id: newProcess.id,
-          ingredient_id: ingredient.id,
-          required_quantity: ingredient.required_quantity,
-          unit: ingredient.unit,
-        });
+  
+      // Ruta del archivo donde se guardarán los cálculos
+      const filePath = 'src/json/calculos_recetas.json'; // Cambia esta ruta a la deseada
+  
+      // Leer el archivo existente (si existe) para agregar el nuevo cálculo
+      let existingData = [];
+      try {
+        //const fileContent = await ipcRenderer.invoke('read-file', filePath);
+        const fileContent = await window.api.database.readJSON(filePath);
+        existingData = JSON.parse(fileContent);
+      } catch (error) {
+        console.log('No se pudo leer el archivo o está vacío, se creará uno nuevo.');
       }
-
-      message.success('Cálculo guardado exitosamente');
+  
+      // Agregar el nuevo cálculo a los datos existentes
+      existingData.push(savedCalculations);
+  
+      // Guardar los datos actualizados en el archivo JSON
+      //await ipcRenderer.invoke('write-file', filePath, JSON.stringify(existingData, null, 2));
+      await window.api.database.writeJSON(filePath, JSON.stringify(existingData, null, 2));
+      message.success('Cálculo guardado en el archivo JSON');
     } catch (error) {
-      //console.error('Error saving calculation:', error);
-      message.error('Error al guardar el cálculo');
+      message.error('Error al guardar el cálculo. Inténtalo de nuevo.');
+      console.error('Error en handleSaveCalculation:', error);
     }
   };
 
-  const handlePrint = () => {
-    const printContent = document.createElement('div');
-    printContent.innerHTML = `
-      <h2>Cálculo de Ingredientes</h2>
-      <p><strong>Receta:</strong> ${selectedRecipe?.name}</p>
-      <p><strong>Cantidad:</strong> ${form.getFieldValue('quantity')} ${selectedRecipe?.base_unit}</p>
-      <table border="1" style="width: 100%; border-collapse: collapse;">
-        <thead>
-          <tr>
-            <th>Ingrediente</th>
-            <th>Cantidad Necesaria</th>
-            <th>Stock Disponible</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${calculatedIngredients.map(ing => `
-            <tr>
-              <td>${ing.name}</td>
-              <td>${ing.required_quantity} ${ing.unit}</td>
-              <td>${ing.current_stock} ${ing.unit}</td>
-              <td>${ing.current_stock < ing.required_quantity ? 'Stock Bajo' : 'Disponible'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
-
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Cálculo de Ingredientes</title></head><body>');
-    printWindow.document.write(printContent.innerHTML);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
+  const handlePrint = async () => {
+    try {
+      const printContent = document.createElement('div');
+      printContent.innerHTML = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #000;">
+          <h2 style="text-align: center; color: #000;">Cálculo de Ingredientes</h2>
+          <p><strong>Receta:</strong> ${selectedRecipe?.name}</p>
+          <p><strong>Cantidad:</strong> ${form.getFieldValue('quantity')} ${selectedRecipe?.base_unit}</p>
+          <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+              <tr>
+                <th style="padding: 8px; text-align: left; color: #000;">Ingrediente</th>
+                <th style="padding: 8px; text-align: left; color: #000;">Cantidad Necesaria</th>
+                <th style="padding: 8px; text-align: left; color: #000;">Stock Disponible</th>
+                <th style="padding: 8px; text-align: left; color: #000;">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${calculatedIngredients.map(ing => `
+                <tr>
+                  <td style="padding: 8px; color: #000;">${ing.name}</td>
+                  <td style="padding: 8px; color: #000;">${ing.required_quantity} ${ing.unit}</td>
+                  <td style="padding: 8px; color: #000;">${ing.current_stock} ${ing.unit}</td>
+                  <td style="padding: 8px; color: #000;">${ing.current_stock < ing.required_quantity ? 'Stock Bajo' : 'Disponible'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+  
+      document.body.appendChild(printContent);
+  
+      const canvas = await html2canvas(printContent, { scale: 2, useCORS: true });
+      document.body.removeChild(printContent);
+  
+      const pdf = new jsPDF();
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+  
+      const pdfData = pdf.output('arraybuffer');
+      const defaultPath = 'calculo_ingredientes.pdf';
+  
+      const result = await window.api.database.savePDF(pdfData, defaultPath);
+  
+      if (result.success) {
+        console.log('PDF guardado correctamente en:', result.filePath);
+      } else {
+        console.error('Error al guardar el PDF:', result.error);
+      }
+    } catch (error) {
+      message.error('Error al generar el PDF. Inténtalo de nuevo.');
+      console.error('Error en handlePrint:', error);
+    }
   };
+  
+  
+  
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%', padding: '20px' }}>
@@ -301,56 +300,6 @@ const IngredientCalculator = () => {
                 onChange={handleQuantityChange}
                 addonAfter={selectedRecipe?.base_unit || 'g'}
               />
-            </Form.Item>
-
-            <Form.Item
-              name="line_id"
-              label="Línea de Producción"
-              rules={[{ required: true, message: 'Seleccione una línea de producción' }]}
-            >
-              <Select style={{ width: '200px' }}>
-              {lines.map(lines => (
-                  <Option key={lines.id} value={lines.id}>
-                    {lines.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="temperature"
-              label="Temperatura (°C)"
-              rules={[{ required: true, message: 'Ingrese la temperatura' }]}
-            >
-              <InputNumber
-                min={0}
-                max={100}
-                style={{ width: '150px' }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="humidity"
-              label="Humedad (%)"
-              rules={[{ required: true, message: 'Ingrese la humedad' }]}
-            >
-              <InputNumber
-                min={0}
-                max={100}
-                style={{ width: '150px' }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="priority"
-              label="Prioridad"
-              rules={[{ required: true, message: 'Seleccione la prioridad' }]}
-            >
-              <Select style={{ width: '150px' }}>
-                <Option value="low">Baja</Option>
-                <Option value="normal">Normal</Option>
-                <Option value="high">Alta</Option>
-              </Select>
             </Form.Item>
           </Space>
         </Form>

@@ -1,11 +1,13 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain,dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import sqlite3 from 'sqlite3'
 import { join as pathJoin } from 'path'
 import db from '../renderer/src/database/database'
-
+const fs = require('fs');
+const fss = require('fs-extra');
+const path = require('path');
 
 function setupRecipeHandlers() {
   // Ejemplo de consulta de recetas
@@ -726,6 +728,49 @@ function setupProcessIngredientHandlers() {
   })
 }
 
+function dialogprocess(){
+  ipcMain.handle('save-pdf', async (event, pdfData, defaultPath) => {
+    const { filePath } = await dialog.showSaveDialog({
+      defaultPath,
+      filters: [{ name: 'PDF', extensions: ['pdf'] }],
+    });
+  
+    if (filePath) {
+      try {
+        // Convertir ArrayBuffer a Buffer
+        const buffer = Buffer.from(pdfData);
+        fs.writeFileSync(filePath, buffer);
+        return { success: true, filePath };
+      } catch (error) {
+        console.error('Error al guardar el PDF:', error);
+        return { success: false, error };
+      }
+    } else {
+      return { success: false, error: 'Operación de guardado cancelada por el usuario.' };
+    }
+  });
+
+  ipcMain.handle('read-file', async (event, filePath) => {
+    try {
+      const data = await fss.readFile(filePath, 'utf-8');
+      return data;
+    } catch (error) {
+      console.error('Error al leer el archivo:', error);
+      throw error; // Lanza el error para que pueda ser manejado en el proceso de renderizado
+    }
+  });
+  
+  ipcMain.handle('write-file', async (event, filePath, data) => {
+    try {
+      await fss.writeFile(filePath, data, 'utf-8');
+    } catch (error) {
+      console.error('Error al escribir en el archivo:', error);
+      throw error; // Lanza el error para que pueda ser manejado en el proceso de renderizado
+    }
+  });
+
+}
+
 // Función principal para configurar todos los manejadores
 function setupIPCHandlers() {
   setupRecipeHandlers()
@@ -738,6 +783,7 @@ function setupIPCHandlers() {
   setupProcessEventHandlers()
   setupQualityCheckHandlers()
   setupProcessIngredientHandlers()
+  dialogprocess()
 }
 function createWindow() {
   // Create the browser window.

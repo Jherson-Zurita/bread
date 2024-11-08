@@ -1,0 +1,48 @@
+[
+  {
+    "id": 1731091668346,
+    "timestamp": "2024-11-08T18:47:48.346Z",
+    "recipe": {
+      "id": 1,
+      "name": "Pan Blanco",
+      "category": "Bakery",
+      "base_quantity": 10,
+      "base_unit": "kg",
+      "estimated_time": 60,
+      "active": null,
+      "created_at": "2024-11-08 17:21:10",
+      "updated_at": "2024-11-08 17:21:10"
+    },
+    "ingredients": [
+      {
+        "id": 1,
+        "name": "Harina de Trigo",
+        "required_quantity": 5,
+        "current_stock": 100,
+        "unit": "kg"
+      },
+      {
+        "id": 4,
+        "name": "Agua",
+        "required_quantity": 3,
+        "current_stock": 200,
+        "unit": "l"
+      },
+      {
+        "id": 5,
+        "name": "Sal",
+        "required_quantity": 0.1,
+        "current_stock": 50,
+        "unit": "kg"
+      },
+      {
+        "id": 6,
+        "name": "Levadura Fresca",
+        "required_quantity": 0.15,
+        "current_stock": 30,
+        "unit": "kg"
+      }
+    ],
+    "quantity": 5
+  }
+]

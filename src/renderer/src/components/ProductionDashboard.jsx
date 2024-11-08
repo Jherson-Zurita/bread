@@ -1,28 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Button, Statistic, Alert, Space, Typography } from 'antd';
-import { 
-  PlusOutlined, 
-  LoadingOutlined, 
-  WarningOutlined, 
-  ShopOutlined, 
-  CheckCircleOutlined, 
-  ClockCircleOutlined, 
-  ExclamationCircleOutlined 
+import {
+  PlusOutlined,
+  LoadingOutlined,
+  WarningOutlined,
+  ShopOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
-import { 
-  LineChart, 
-  Line, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer, 
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
   PieChart,
-  Pie, 
-  Cell 
+  Pie,
+  Cell
 } from 'recharts';
 
 const { Title } = Typography;
@@ -45,20 +45,36 @@ const ProductionDashboard = () => {
   const COLORS = ['#1890ff', '#52c41a', '#faad14', '#f5222d'];
   const EFFICIENCY_COLORS = ['#52c41a', '#f5222d'];
 
+  const formatDateToTimestamp = (date) => {
+    const pad = (n) => (n < 10 ? '0' + n : n);
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+
   // Función para obtener los datos del dashboard
   const fetchDashboardData = async () => {
     try {
       // Obtener procesos activos
       const activeProcesses = await window.api.database.getActiveProcesses();
-      
+
       // Obtener procesos completados hoy
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const startOfDay = new Date(today.setHours(0, 0, 0, 0)); // Inicio del día 
+      const endOfDay = new Date(today.setHours(23, 59, 59, 999)); // Fin del día
+      const startOfDayTimestamp = formatDateToTimestamp(startOfDay);
+      const endOfDayTimestamp = formatDateToTimestamp(endOfDay);
       const processes = await window.api.database.getProcessesByDateRange(
-        today.toISOString(),
-        new Date().toISOString()
+        startOfDayTimestamp,
+        endOfDayTimestamp
       );
-      
+
+      //console.log("procesos :", processes, startOfDayTimestamp, endOfDayTimestamp);
+
       // Obtener ingredientes con stock bajo
       const lowStockItems = await window.api.database.getLowStockIngredients();
 
@@ -68,6 +84,7 @@ const ProductionDashboard = () => {
         pendingOrders: processes.filter(p => p.status === 'pending').length,
         stockAlerts: lowStockItems.length
       });
+
 
       setLowStockIngredients(lowStockItems);
     } catch (error) {
@@ -80,7 +97,7 @@ const ProductionDashboard = () => {
     try {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - 7);
-      
+
       const processes = await window.api.database.getProcessesByDateRange(
         startDate.toISOString(),
         new Date().toISOString()
@@ -116,7 +133,7 @@ const ProductionDashboard = () => {
     try {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - 30);
-      
+
       const ingredients = await window.api.database.getIngredients();
       const usageData = await Promise.all(
         ingredients.map(async (ingredient) => {
@@ -189,10 +206,10 @@ const ProductionDashboard = () => {
     };
 
     loadAllData();
-    
+
     // Configurar actualizaciones periódicas
     const interval = setInterval(loadAllData, 300000); // Actualizar cada 5 minutos
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -204,8 +221,8 @@ const ProductionDashboard = () => {
           <Title level={2}>Panel de Control - Panadería Industrial</Title>
         </Col>
         <Col>
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             icon={<PlusOutlined />}
             onClick={() => setShowNewProcessForm(true)}
           >
@@ -273,11 +290,11 @@ const ProductionDashboard = () => {
                   {Object.keys(productionData[0] || {})
                     .filter(key => key !== 'name')
                     .map((key, index) => (
-                      <Line 
+                      <Line
                         key={key}
-                        type="monotone" 
-                        dataKey={key} 
-                        stroke={COLORS[index % COLORS.length]} 
+                        type="monotone"
+                        dataKey={key}
+                        stroke={COLORS[index % COLORS.length]}
                       />
                     ))}
                 </LineChart>
@@ -285,7 +302,7 @@ const ProductionDashboard = () => {
             </div>
           </Card>
         </Col>
-        
+
         <Col xs={24} lg={12}>
           <Card title="Uso de Ingredientes (kg)">
             <div style={{ height: 400 }}>
@@ -341,7 +358,7 @@ const ProductionDashboard = () => {
             <ul>
               {lowStockIngredients.map(ingredient => (
                 <li key={ingredient.id}>
-                  {ingredient.name}: {ingredient.current_stock} {ingredient.unit} 
+                  {ingredient.name}: {ingredient.current_stock} {ingredient.unit}
                   (Mínimo: {ingredient.min_stock} {ingredient.unit})
                 </li>
               ))}
@@ -366,7 +383,7 @@ const ProductionDashboard = () => {
           <ul>
             {activeProcesses.map(process => (
               <li key={process.id}>
-                Batch #{process.batch_number} - {process.recipe_id} 
+                Batch #{process.batch_number} - {process.recipe_id}
                 (Progreso: {process.progress}%)
               </li>
             ))}

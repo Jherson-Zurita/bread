@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Card, Table, Tag, Space, Button, Progress, Typography, Badge, Dropdown, Modal, Input,
-  Timeline, Row, Col, Statistic, Divider
+  Timeline, Row, Col, Statistic, Divider, message
 } from 'antd';
 import {
   PlayCircleOutlined,
@@ -129,7 +129,7 @@ const ProductionList = () => {
   };
 
   const handleMenuClick = async (action, record) => {
-    console.log('Action:', action, 'Record:', record); // Mantener para debugging
+    //console.log('Action:', action, 'Record:', record); // Mantener para debugging
     try {
       switch (action) {
         case 'details':
@@ -157,6 +157,7 @@ const ProductionList = () => {
               });
               await window.api.database.addProcessEvent({
                 process_id: record.id,
+                event_time: new Date().toISOString(),
                 description: 'Proceso iniciado',
                 status: 'in_progress'
               });
@@ -177,6 +178,7 @@ const ProductionList = () => {
               });
               await window.api.database.addProcessEvent({
                 process_id: record.id,
+                event_time: new Date().toISOString(),
                 description: 'Proceso pausado',
                 status: 'paused'
               });
@@ -197,6 +199,7 @@ const ProductionList = () => {
               });
               await window.api.database.addProcessEvent({
                 process_id: record.id,
+                event_time: new Date().toISOString(),
                 description: 'Proceso reanudado',
                 status: 'in_progress'
               });
@@ -212,18 +215,29 @@ const ProductionList = () => {
             icon: <CheckCircleOutlined />,
             content: `¿Confirma que el proceso ${record.batch_number} está completado?`,
             async onOk() {
-              await window.api.database.updateProductionProcess(record.id, {
-                status: 'completed',
-                actual_end_time: new Date().toISOString(),
-                progress: 100
-              });
-              await window.api.database.addProcessEvent({
-                process_id: record.id,
-                description: 'Proceso completado',
-                status: 'completed'
-              });
-              loadProductionProcesses();
-              message.success('Proceso completado exitosamente');
+              try {
+                await window.api.database.updateProductionProcess(record.id, {
+                  status: 'completed',
+                  actual_end_time: new Date().toISOString(),
+                  progress: 100
+                });
+                await window.api.database.addProcessEvent({
+                  process_id: record.id,
+                  event_time: new Date().toISOString(),
+                  description: 'Proceso completado',
+                  status: 'completed'
+                });
+                
+                loadProductionProcesses(); // Actualiza la lista de procesos
+                message.success('Proceso completado exitosamente');
+
+                // Cierra el modal si está abierto
+                setDetailsVisible(false);
+                setSelectedProcess(null);
+              } catch (error) {
+                console.error('Error al completar el proceso:', error);
+                message.error('Error al completar el proceso');
+              }
             }
           });
           break;

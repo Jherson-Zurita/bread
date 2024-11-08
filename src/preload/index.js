@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, dialog } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
@@ -85,7 +85,12 @@ const api = {
     addProcessIngredient: (ingredientData) => 
       ipcRenderer.invoke('add-process-ingredient', ingredientData),
     updateProcessIngredient: (processId, ingredientId, updateData) => 
-      ipcRenderer.invoke('update-process-ingredient', processId, ingredientId, updateData)
+      ipcRenderer.invoke('update-process-ingredient', processId, ingredientId, updateData),
+
+    //dialog methods
+    savePDF: (pdfData, defaultPath) => ipcRenderer.invoke('save-pdf', pdfData, defaultPath),
+    readJSON: (defaultPath) => ipcRenderer.invoke('read-file', defaultPath),
+    writeJSON: (defaultPath, data) => ipcRenderer.invoke('write-file', defaultPath, data)
   }
 }
 

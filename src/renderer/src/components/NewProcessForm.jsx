@@ -3,8 +3,6 @@ import { Form, Input, InputNumber, Select, DatePicker, Button, Card, Space, Divi
 import {
   SaveOutlined,
   CloseOutlined,
-  PlusOutlined,
-  DeleteOutlined
 } from '@ant-design/icons';
 import moment from 'moment';
 
@@ -17,7 +15,7 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
   const [recipes, setRecipes] = useState([]);
   const [operators, setOperators] = useState([]);
   const [productionLines, setProductionLines] = useState([]);
-  // Cargar datos iniciales
+
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -39,7 +37,6 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
     }
   };
 
-
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
@@ -47,7 +44,7 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
         values.receta,
         values.cantidadLote
       );
-      // Preparar datos para el proceso de producción
+
       const processData = {
         recipe_id: values.receta,
         operator_id: values.operador,
@@ -55,20 +52,23 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
         quantity: values.cantidadLote,
         unit: 'kg', // Asumiendo que siempre es en kg
         start_time: values.fechaInicio.format('YYYY-MM-DD HH:mm:ss'),
-        estimated_time: values.tiempoEstimado,
+        estimated_end_time: moment(values.fechaInicio).add(values.tiempoEstimado, 'minutes').format('YYYY-MM-DD HH:mm:ss'), // Se calcula el tiempo estimado
         status: 'pending',
+        progress: 0, // Valor por defecto
         priority: values.prioridad,
-        batch_number: generateBatchNumber(), // Función para generar número de lote
-        notes: values.notas
+        batch_number: generateBatchNumber(),
+        temperature: values.temperatura,
+        humidity: values.humedad,
+        created_at: moment().format('YYYY-MM-DD HH:mm:ss'), // Fecha de creación
+        notes: values.notas,
       };
 
       if (!availability.available) {
-        // Mostrar mensaje detallado de los ingredientes faltantes
         const missingIngredients = availability.ingredients
           .filter(ing => !ing.available)
           .map(ing => `${ing.name} (Necesario: ${ing.required_quantity}${ing.unit}, Disponible: ${ing.current_stock}${ing.unit})`)
           .join('\n');
-  
+
         message.error(
           <>
             <div>No hay suficientes ingredientes disponibles:</div>
@@ -79,18 +79,20 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
         );
         return;
       }
-  
 
-      // Crear el proceso
       const newProcess = await window.api.database.addProductionProcess(processData);
 
-      // Crear los ingredientes del proceso
       const recipeIngredients = await window.api.database.getRecipeIngredients(values.receta);
+      //console.log("ingredientes recta :",recipeIngredients.quantity);
+
       for (const ingredient of recipeIngredients) {
+
+        await window.api.database.updateIngredientStock(ingredient.ingredient_id, ingredient.quantity, 'subtract');
+
         await window.api.database.addProcessIngredient({
           process_id: newProcess.id,
           ingredient_id: ingredient.ingredient_id,
-          required_quantity: ingredient.quantity * (values.cantidadLote / ingredient.base_quantity),
+          required_quantity: ingredient.quantity * (values.cantidadLote / 1),
           unit: ingredient.unit,
         });
       }
@@ -122,7 +124,7 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
       const recipe = recipes.find(r => r.id === recipeId);
       if (recipe) {
         form.setFieldsValue({
-          tiempoEstimado: recipe.estimated_time
+          tiempoEstimado: recipe.estimated_time // Asumiendo que el tiempo estimado está en la receta
         });
       }
     } catch (error) {
@@ -139,7 +141,7 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
     <Card>
       <Title level={3}>Nuevo Proceso de Producción</Title>
       <Form
-        form={form}
+        form = {form}
         layout="vertical"
         onFinish={handleSubmit}
         initialValues={{
@@ -160,7 +162,7 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
           >
             {recipes.map(recipe => (
               <Option key={recipe.id} value={recipe.id}>
-                {recipe.name} {/* Asegúrate de que el campo se llame 'name' en tu BD */}
+                {recipe.name}
               </Option>
             ))}
           </Select>
@@ -191,6 +193,30 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
           />
         </Form.Item>
 
+        <Form.Item
+          name="temperatura"
+          label="Temperatura (°C)"
+          rules={[{ required: true, message: 'Por favor ingrese la temperatura' }]}
+        >
+          <InputNumber
+            min={0}
+            style={{ width: '100%' }}
+            addonAfter="°C"
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="humedad"
+          label="Humedad (%)"
+          rules={[{ required: true, message: 'Por favor ingrese la humedad' }]}
+        >
+          <InputNumber
+            min={0}
+            max={100}
+            style={{ width: '100%' }}
+            addonAfter="%"
+          />
+        </Form.Item>
         <Divider />
 
         {/* Producción */}
@@ -203,7 +229,7 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
           <Select placeholder="Seleccione línea de producción">
             {productionLines.map(line => (
               <Option key={line.id} value={line.id}>
-                {line.name} {/* Asegúrate de que el campo se llame 'name' en tu BD */}
+                {line.name}
               </Option>
             ))}
           </Select>
@@ -217,7 +243,7 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
           <Select placeholder="Seleccione operador">
             {operators.map(operator => (
               <Option key={operator.id} value={operator.id}>
-                {operator.name} {/* Asegúrate de que el campo se llame 'name' en tu BD */}
+                {operator.name}
               </Option>
             ))}
           </Select>
@@ -278,8 +304,8 @@ const NewProcessForm = ({ onSubmit, onCancel }) => {
               onClick={handleCancel}
             >
               Cancelar
-            </Button>
-          </Space>
+            </ Button>
+            </Space>
         </Form.Item>
       </Form>
     </Card>
