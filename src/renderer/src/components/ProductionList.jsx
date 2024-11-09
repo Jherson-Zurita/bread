@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Card, Table, Tag, Space, Button, Progress, Typography, Badge, Dropdown, Modal, Input,
-  Timeline, Row, Col, Statistic, Divider, message
+  Timeline, Row, Col, Statistic, Divider, message, Empty
 } from 'antd';
 import {
   PlayCircleOutlined,
@@ -16,6 +16,8 @@ import {
   PrinterOutlined
 } from '@ant-design/icons';
 import moment from 'moment';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -83,8 +85,9 @@ const ProductionList = () => {
 
   const filteredProcesses = processes.filter(process => {
     const matchesSearch = searchText ? (
-      process.batch_number.toLowerCase().includes(searchText.toLowerCase()) ||
-      process.recipe_name.toLowerCase().includes(searchText.toLowerCase())
+      (process?.batch_number || '').toLowerCase().includes(searchText.toLowerCase()) ||
+      (process?.recipe_name || '').toLowerCase().includes(searchText.toLowerCase()) ||
+      (recipes[process?.recipe_id] || '').toLowerCase().includes(searchText.toLowerCase())
     ) : true;
 
     const matchesStatus = filterStatus === 'all' ? true : process.status === filterStatus;
@@ -227,7 +230,7 @@ const ProductionList = () => {
                   description: 'Proceso completado',
                   status: 'completed'
                 });
-                
+
                 loadProductionProcesses(); // Actualiza la lista de procesos
                 message.success('Proceso completado exitosamente');
 
@@ -243,9 +246,167 @@ const ProductionList = () => {
           break;
 
         case 'report':
-          // Aquí podrías abrir una modal o una nueva página con el reporte detallado
-          console.log('Generar reporte para el proceso:', record.batch_number);
-          // Implementa la lógica para mostrar el reporte
+          try {
+            const processDetails = await window.api.database.getProductionProcessById(record.id);
+            const processEvents = await window.api.database.getProcessEvents(record.id);
+            const qualityChecks = await window.api.database.getQualityChecks(record.id);
+
+            const printContent = document.createElement('div');
+            printContent.style.width = '595px';
+            printContent.style.padding = '10px'; // Reducimos el padding
+            printContent.style.boxSizing = 'border-box';
+            printContent.style.backgroundColor = '#ffffff';
+
+            printContent.innerHTML = `
+                  <div style="font-family: Arial, sans-serif; color: #000; font-size: 10px;"> <!-- Reducimos el tamaño de la fuente -->
+                    <h2 style="text-align: center; color: #000; font-size: 14px; margin-bottom: 10px; white-space: nowrap;">Reporte de Proceso de Producción</h2>
+                    
+                    <div style="margin-bottom: 10px; font-size: 10px;">
+                      <table style="width: 100%; margin-bottom: 10px; border-collapse: collapse;">
+                        <tr>
+                          <td style="padding: 4px 0;"><strong>Número de Lote:</strong></td>
+                          <td>${processDetails.batch_number}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 4px 0;"><strong>Receta:</strong></td>
+                          <td>${recipes[processDetails.recipe_id] || 'No disponible'}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 4px 0;"><strong>Línea:</strong></td>
+                          <td>${lines[processDetails.line_id] || 'No asignada'}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 4px 0;"><strong>Operador:</strong></td>
+                          <td>${operators[processDetails.operator_id] || 'No asignado'}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 4px 0;"><strong>Cantidad:</strong></td>
+                          <td>${processDetails.quantity} kg</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 4px 0;"><strong>Estado:</strong></td>
+                          <td>${statusText[processDetails.status]}</td>
+                        </tr>
+                      </table>
+                    </div>
+                    
+                    <h3 style="color: #000; font-size: 12px; margin: 10px 0; border-bottom: 2px solid #000; padding-bottom: 3px;">Registro de Eventos</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                      <thead>
+                        <tr>
+                          <th style="padding: 4px; text-align: left; color: #000; font-size: 10px; border: 1px solid #ddd; background-color: #f5f5f5; width: 180px;">Hora</th>
+                          <th style="padding: 4px; text-align: left; color: #000; font-size: 10px; border: 1px solid #ddd; background-color: #f5f5f5;">Descripción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${[...processEvents, ...qualityChecks]
+                .sort((a, b) => new Date(a.event_time || a.check_time) - new Date(b.event_time || b.check_time))
+                .map(event => `
+                            <tr>
+                              <td style="padding: 4px; color: #000; font-size: 10px; border: 1px solid #ddd;">
+                                ${moment(event.event_time || event.check_time).format('YYYY-MM-DD HH:mm:ss')}
+                              </td>
+                              <td style="padding: 4px; color: #000; font-size: 10px; border: 1px solid #ddd;">
+                                ${event.description || `${event.parameter}: ${event.value} ${event.unit || ''}`}
+                              </td>
+                            </tr>
+                          `).join('')}
+                      </tbody>
+                    </table>
+                    
+                    ${qualityChecks.length > 0 ? `
+                      <h3 style="color: #000; font-size: 12px; margin: 10px 0; border-bottom: 2px solid #000; padding-bottom: 3px;">Controles de Calidad</h3>
+                      <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                          <tr>
+                            <th style="padding: 4px; text-align: left; color: #000; font-size: 10px; border: 1px solid #ddd; background-color: #f5f5f5;">Parámetro</th>
+                            <th style="padding: 4px; text-align: left; color: #000; font-size: 10px; border: 1px solid #ddd; background-color: #f5f5f5;">Valor</th>
+                            <th style="padding: 4px; text-align: left; color: #000; font-size: 10px; border: 1px solid #ddd; background-color: #f5f5f5;">Unidad</th>
+                            <th style="padding: 4px; text-align: left; color: #000; font-size: 10px; border: 1px solid #ddd; background-color: #f5f5f5;">Hora</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${qualityChecks.map(check => `
+                            <tr>
+                              <td style="padding: 4px; color: #000; font-size: 10px; border: 1px solid #ddd;">${check.parameter}</td>
+                              <td style="padding: 4px; color: #000; font-size: 10px; border: 1px solid #ddd;">${check.value}</td>
+                              <td style="padding: 4px; color: #000; font-size: 10px; border: 1px solid #ddd;">${check.unit || 'N/A'}</td>
+                              <td style="padding: 4px; color: #000; font-size: 10px; border: 1px solid #ddd;">
+                                ${moment(check.check_time).format('YYYY-MM-DD HH:mm:ss')}
+                              </td>
+                            </tr>
+                          `).join('')}
+                        </tbody>
+                      </table>
+                    ` : ''}
+                  </div>
+                `;
+
+            document.body.appendChild(printContent);
+
+            const canvas = await html2canvas(printContent, {
+              scale: 5, // Ajustamos la escala
+              useCORS: true,
+              logging: false,
+              windowWidth: printContent.scrollWidth,
+              windowHeight: printContent.scrollHeight,
+              backgroundColor: '#ffffff'
+            });
+
+            document.body.removeChild(printContent);
+
+            const pdf = new jsPDF({
+              orientation: 'portrait',
+              unit: 'pt',
+              format: 'a4'
+            });
+
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = pageWidth;
+            const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+            if (imgHeight > pageHeight) {
+              const scale = pageHeight / imgHeight;
+              pdf.addImage(
+                canvas.toDataURL('image/jpeg', 1.0),
+                'JPEG',
+                0,
+                0,
+                pageWidth * scale,
+                pageHeight,
+                undefined,
+                'FAST'
+              );
+            } else {
+              pdf.addImage(
+                canvas.toDataURL('image/jpeg', 1.0),
+                'JPEG',
+                0,
+                0,
+                imgWidth,
+                imgHeight,
+                undefined,
+                'FAST'
+              );
+            }
+
+            const pdfData = pdf.output('arraybuffer');
+            const defaultPath = `reporte_proceso_${processDetails.batch_number}.pdf`;
+
+            const result = await window.api.database.savePDF(pdfData, defaultPath);
+
+            if (result.success) {
+              message.success(`Reporte guardado en: ${result.filePath}`);
+              console.log('PDF guardado correctamente en:', result.filePath);
+            } else {
+              message.error('Error al generar el reporte');
+              console.error('Error al guardar el PDF:', result.error);
+            }
+          } catch (error) {
+            message.error('Error al generar el reporte. Inténtalo de nuevo.');
+            console.error('Error en handleReport:', error);
+          }
           break;
 
         case 'cancel':
@@ -276,17 +437,13 @@ const ProductionList = () => {
       message.error('Error al procesar la acción');
     }
   };
+
   const getMenuItems = (record) => {
     const items = [
       {
         key: 'details',
         label: 'Ver detalles',
         icon: <FileTextOutlined />
-      },
-      {
-        key: 'print',
-        label: 'Imprimir ficha',
-        icon: <PrinterOutlined />
       }
     ];
     // Mapeo de estados en español a inglés
@@ -336,7 +493,7 @@ const ProductionList = () => {
       case 'completed':
         items.push({
           key: 'report',
-          label: 'Ver reporte',
+          label: 'Generar reporte',
           icon: <FileTextOutlined />
         });
         break;
@@ -517,12 +674,30 @@ const ProductionList = () => {
 
         <Table
           columns={columns}
-          dataSource={processes}
+          dataSource={filteredProcesses}
           rowKey="id"
+          locale={{
+            emptyText: (
+              <Empty 
+                description={
+                  searchText 
+                    ? `No se encontraron resultados para "${searchText}"` 
+                    : "No hay procesos de producción"
+                }
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              >
+                {searchText && (
+                  <Button type="primary" onClick={() => setSearchText('')}>
+                    Limpiar búsqueda
+                  </Button>
+                )}
+              </Empty>
+            )
+          }}
           pagination={{
-            total: processes.length,
+            total: filteredProcesses.length,
             pageSize: 10,
-            showTotal: (total) => `Total ${total} procesos`
+            showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} procesos`
           }}
         />
 

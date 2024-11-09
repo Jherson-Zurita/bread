@@ -22,6 +22,7 @@ function initializeDatabase() {
         base_unit VARCHAR(10) NOT NULL,
         estimated_time INTEGER NOT NULL,
         active BOOLEAN DEFAULT true,
+        image_url VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );

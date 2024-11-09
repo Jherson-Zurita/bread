@@ -32,10 +32,10 @@ function setupRecipeHandlers() {
   // Ejemplo de insertar una receta
   ipcMain.handle('add-recipe', async (_, recipeData) => {
     return new Promise((resolve, reject) => {
-      const { name, category, base_quantity, base_unit, estimated_time,active } = recipeData;
+      const { name, category, base_quantity, base_unit, estimated_time,active,image_url } = recipeData;
       db.run(
-        'INSERT INTO recipes (name, category, base_quantity, base_unit, estimated_time,active) VALUES (?, ?, ?, ?, ?,?)',
-        [name, category, base_quantity, base_unit, estimated_time,active],
+        'INSERT INTO recipes (name, category, base_quantity, base_unit, estimated_time,active,image_url) VALUES (?, ?, ?, ?, ?,?,?)',
+        [name, category, base_quantity, base_unit, estimated_time,active,image_url],
         function (err) {
           if (err) reject(err);
           else resolve({ id: this.lastID });
@@ -47,10 +47,10 @@ function setupRecipeHandlers() {
   // Ejemplo de actualizar una receta
   ipcMain.handle('update-recipe', async (_, recipeData) => {
     return new Promise((resolve, reject) => {
-      const { id, name, category, base_quantity, base_unit, estimated_time, active } = recipeData;
+      const { id, name, category, base_quantity, base_unit, estimated_time, active, image_url } = recipeData;
       db.run(
-        `UPDATE recipes SET name = ?, category = ?, base_quantity = ?, base_unit = ?, estimated_time = ?, active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [name, category, base_quantity, base_unit, estimated_time, active, id],
+        `UPDATE recipes SET name = ?, category = ?, base_quantity = ?, base_unit = ?, estimated_time = ?, active = ?, image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [name, category, base_quantity, base_unit, estimated_time, active,image_url, id],
         function (err) {
           if (err) reject(err);
           else resolve({ changes: this.changes });
@@ -244,7 +244,7 @@ function setupRecipeIngredientHandlers() {
           console.error('Database error:', err);
           reject(err);
         } else {
-          console.log('Query results:', rows);
+          //console.log('Query results:', rows);
           resolve(rows);
         }
       });
