@@ -90,7 +90,8 @@ const api = {
     //dialog methods
     savePDF: (pdfData, defaultPath) => ipcRenderer.invoke('save-pdf', pdfData, defaultPath),
     readJSON: (defaultPath) => ipcRenderer.invoke('read-file', defaultPath),
-    writeJSON: (defaultPath, data) => ipcRenderer.invoke('write-file', defaultPath, data)
+    writeJSON: (defaultPath, data) => ipcRenderer.invoke('write-file', defaultPath, data),
+    saveImage: (filePath, imageData) => ipcRenderer.invoke('save-image', filePath, imageData),
   }
 }
 

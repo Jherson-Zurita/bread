@@ -34,7 +34,7 @@ function setupRecipeHandlers() {
     return new Promise((resolve, reject) => {
       const { name, category, base_quantity, base_unit, estimated_time,active,image_url } = recipeData;
       db.run(
-        'INSERT INTO recipes (name, category, base_quantity, base_unit, estimated_time,active,image_url) VALUES (?, ?, ?, ?, ?,?,?)',
+        'INSERT INTO recipes (name, category, base_quantity, base_unit, estimated_time,active,image_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [name, category, base_quantity, base_unit, estimated_time,active,image_url],
         function (err) {
           if (err) reject(err);
@@ -45,12 +45,12 @@ function setupRecipeHandlers() {
   });
 
   // Ejemplo de actualizar una receta
-  ipcMain.handle('update-recipe', async (_, recipeData) => {
+  ipcMain.handle('update-recipe', async (_, id, recipeData) => {
     return new Promise((resolve, reject) => {
-      const { id, name, category, base_quantity, base_unit, estimated_time, active, image_url } = recipeData;
+      const { name, category, base_quantity, base_unit, estimated_time, active, image_url } = recipeData;
       db.run(
         `UPDATE recipes SET name = ?, category = ?, base_quantity = ?, base_unit = ?, estimated_time = ?, active = ?, image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [name, category, base_quantity, base_unit, estimated_time, active,image_url, id],
+        [name, category, base_quantity, base_unit, estimated_time, active, image_url, id],
         function (err) {
           if (err) reject(err);
           else resolve({ changes: this.changes });
@@ -58,6 +58,7 @@ function setupRecipeHandlers() {
       );
     });
   });
+  
 
   // Ejemplo de eliminar una receta
   ipcMain.handle('delete-recipe', async (_, recipeId) => {
@@ -768,6 +769,22 @@ function dialogprocess(){
       throw error; // Lanza el error para que pueda ser manejado en el proceso de renderizado
     }
   });
+
+  ipcMain.handle('save-image', async (event, filePath, imageData) => {
+    try {
+      // Convertir imageData (que está en base64) a buffer
+      const imageBuffer = Buffer.from(imageData, 'base64');
+      
+      // Escribir la imagen en la ruta especificada
+      await fs.promises.writeFile(filePath, imageBuffer);
+      
+      console.log('Imagen guardada en:', filePath);
+    } catch (error) {
+      console.error('Error al guardar la imagen:', error);
+      throw error; // Lanza el error para que pueda ser manejado en el proceso de renderizado
+    }
+  });
+  
 
 }
 

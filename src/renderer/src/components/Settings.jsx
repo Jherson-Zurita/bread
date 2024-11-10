@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
   Card, Tabs, Form, Input, InputNumber, Button, Table, Space, Modal, Select,
-  Typography, Row, Col, Alert, Popconfirm, message, Tag, Switch, Empty,Upload
+  Typography, Row, Col, Alert, Popconfirm, message, Tag, Switch, Empty, Upload
 } from 'antd';
 import {
-  PlusOutlined, EditOutlined, DeleteOutlined, SaveOutlined, BellOutlined, LineChartOutlined, 
-  OrderedListOutlined,UploadOutlined
+  PlusOutlined, EditOutlined, DeleteOutlined, SaveOutlined, BellOutlined, LineChartOutlined,
+  OrderedListOutlined, UploadOutlined
 } from '@ant-design/icons';
+import fs from 'fs';
+import path from 'path';
+import { Buffer } from 'buffer';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -18,6 +21,7 @@ const Settings = () => {
     recipes: false,
     action: false
   });
+
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [isRecipeModalVisible, setIsRecipeModalVisible] = useState(false);
   const [recipes, setRecipes] = useState([]);
@@ -101,7 +105,11 @@ const Settings = () => {
       title: 'Imagen',
       dataIndex: 'image_url',
       key: 'image_url',
-      render: (url) => <img src={url} alt="Receta" style={{ width: 50, height: 50 }} />
+      render: (url) => {
+        const imageUrl = `/images/${url}`; // Ruta a una imagen por defecto
+        //console.log('URL de la imagen:', imageUrl);
+        return <img src={imageUrl} alt="Receta" style={{ width: 70, height: 70 }} />;
+      }
     },
     {
       title: 'Categoría',
@@ -302,6 +310,23 @@ const Settings = () => {
     try {
       setLoading({ ...loading, action: true });
 
+      // Obtener el archivo de imagen del campo de formulario
+      const imageFile = values.image_file ? values.image_file.file : null; // Verifica si existe
+
+      let imageUrl = '';
+
+      // Si hay un archivo de imagen, procesarlo
+      if (imageFile) {
+        // Generar un nuevo nombre para la imagen
+        const timestamp = new Date().toISOString().replace(/[-:.]/g, ''); // Formato: YYYYMMDDHHMMSS
+        const newFileName = `${timestamp}_${imageFile.name}`;
+        // Guardar la imagen usando la función modificada
+        imageUrl = await saveImage(imageFile, newFileName);
+      } else if (editingRecipe) {
+        // Si no hay un nuevo archivo de imagen y estamos editando, mantener la imagen existente
+        imageUrl = editingRecipe.image_url; // Mantener la URL de la imagen existente
+      }
+
       const recipeData = {
         name: values.name,
         category: values.category,
@@ -309,14 +334,18 @@ const Settings = () => {
         base_unit: values.base_unit,
         estimated_time: values.estimated_time,
         active: values.active !== undefined ? values.active : true,
+        image_url: imageUrl, // Usar la URL de la imagen guardada
       };
 
       if (editingRecipe) {
         // Actualizar la receta principal
+        //console.log("desde adentro",recipeData);
         const updatedRecipe = await window.api.database.updateRecipe(editingRecipe.id, recipeData);
+        console.log("Console desde update: ",updatedRecipe);
 
         // Obtener los ingredientes actuales de la receta
         const currentIngredients = await window.api.database.getRecipeIngredients(editingRecipe.id);
+        console.log("Console desde update ingredientws: ",currentIngredients);
 
         // Crear un mapa de ingredientes actuales
         const currentIngredientsMap = {};
@@ -375,6 +404,17 @@ const Settings = () => {
     }
   };
 
+  // Función para guardar la imagen
+  const saveImage = async (file, newFileName) => {
+    const filePath = `src/renderer/public/images/${newFileName}`; // Define la ruta completa donde se guardará la imagen
+    const imageData = await file.arrayBuffer(); // Convierte el archivo a un ArrayBuffer
+    const base64Image = Buffer.from(imageData).toString('base64'); // Convierte a base64
+
+    // Llama al manejador de IPC para guardar la imagen
+    await window.api.database.saveImage(filePath, base64Image);
+
+    return `${newFileName}`; // Retorna la URL donde se guardó la imagen
+  };
   // Manejadores de eventos para ingredientes
   const handleAddIngredient = () => {
     setEditingIngredient(null);
@@ -878,11 +918,14 @@ const Settings = () => {
               <Form.Item
                 name="image_file"
                 label="Imagen de la Receta"
-                rules={[{ required: true, message: 'Por favor selecciona una imagen' }]}
-              // Validar que se haya subido una imagen 
               >
-                <Upload name="file" listType="picture" beforeUpload={() => false}
-                // Para evitar la carga automática y manejarla manualmente 
+                <Upload
+                  name="file"
+                  listType="picture"
+                  beforeUpload={() => false} // Evitar la carga automática
+                  onChange={({ file }) => {
+                    // Puedes manejar el archivo aquí si lo necesitas
+                  }}
                 >
                   <Button icon={<UploadOutlined />}>Seleccionar Imagen</Button>
                 </Upload>
