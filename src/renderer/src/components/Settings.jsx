@@ -604,20 +604,32 @@ const Settings = () => {
   const handleSaveProcessStep = async (values) => {
     try {
       setLoading({ ...loading, action: true });
+      
+      // Asegurarse de incluir el recipe_id
+      const processStepData = {
+        recipe_id: selectedRecipeId, // Usar el ID de receta seleccionado
+        step_number: values.step_number,
+        title: values.title,
+        description: values.description,
+        estimated_time: values.estimated_time
+      };
+  
       if (editingProcessStep) {
         // Actualizar paso de proceso existente
-        await window.api.database.updateProcessStep(editingProcessStep.id, values);
+        await window.api.database.updateProcessStep(editingProcessStep.id, processStepData);
         setProcessSteps(processSteps.map(step =>
-          step.id === editingProcessStep.id ? { ...step, ...values } : step
+          step.id === editingProcessStep.id ? { ...step, ...processStepData } : step
         ));
         message.success('Paso de proceso actualizado exitosamente');
       } else {
         // Crear nuevo paso de proceso
-        const newStep = await window.api.database.addProcessStep(values);
+        const newStep = await window.api.database.addProcessStep(processStepData);
         setProcessSteps([...processSteps, newStep]);
         message.success('Paso de proceso creado exitosamente');
       }
+      
       setIsProcessStepModalVisible(false);
+      setEditingProcessStep(null);
       processStepForm.resetFields();
     } catch (error) {
       message.error('Error al guardar el paso de proceso');

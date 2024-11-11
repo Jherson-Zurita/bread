@@ -29,9 +29,9 @@ const ProductionList = () => {
   const [searchText, setSearchText] = useState('');
   const [processes, setProcesses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [recipes, setRecipes] = useState({}); // Objeto para mapear recipe_id -> name
-  const [operators, setOperators] = useState({}); // Objeto para mapear operator_id -> name
-  const [lines, setLines] = useState({}); // Objeto para mapear line_id -> name
+  const [recipes, setRecipes] = useState({}); 
+  const [operators, setOperators] = useState({});
+  const [lines, setLines] = useState({}); 
 
   useEffect(() => {
     const loadReferenceData = async () => {

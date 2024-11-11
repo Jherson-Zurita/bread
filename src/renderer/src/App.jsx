@@ -8,6 +8,7 @@ import ProductionList from './components/ProductionList';
 import ProcessDetails from './components/ProcessDetails';
 import Settings from './components/Settings';
 import AddTestData from './components/AddTestData';
+import ProcessMapping from './components/ProcessMapping';
 import "../src/assets/App.css";
 // Importa los demás componentes necesarios aquí...
 
@@ -30,6 +31,8 @@ function App() {
         return <Settings />;
       case 'data':
         return <AddTestData />;
+      case 'processMapping':
+        return <ProcessMapping />;
       default:
         return <ProductionDashboard />;
     }

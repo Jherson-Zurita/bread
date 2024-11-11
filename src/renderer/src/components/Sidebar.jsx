@@ -13,6 +13,7 @@ function Sidebar({ onNavigate }) {
         <li onClick={() => onNavigate('productionList')}>Production List</li>
         <li onClick={() => onNavigate('processDetails')}>Process Details</li>
         <li onClick={() => onNavigate('settings')}>Settings</li>
+        <li onClick={() => onNavigate('processMapping')}>Process Progress</li>
         <li onClick={() => onNavigate('data')}>Admin</li>
       </ul>
     </div>
