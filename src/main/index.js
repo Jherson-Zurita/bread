@@ -9,6 +9,9 @@ const fs = require('fs');
 const fss = require('fs-extra');
 const path = require('path');
 
+let mainWindow;
+let splashWindow;
+
 function setupRecipeHandlers() {
   // Ejemplo de consulta de recetas
   ipcMain.handle('get-recipes', async () => {
@@ -802,6 +805,27 @@ function setupIPCHandlers() {
   setupProcessIngredientHandlers()
   dialogprocess()
 }
+
+function createSplashWindow() {
+  // Crear la ventana de carga
+  splashWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+  });
+
+  // Cargar el archivo HTML de la ventana de carga
+  splashWindow.loadFile(join(__dirname, '../../src/main/splash.html'));
+
+  // Cerrar la ventana de carga después de un tiempo (por ejemplo, 3 segundos)
+  setTimeout(() => {
+    splashWindow.close();
+    createWindow();
+  }, 4000); // Ajusta el tiempo según sea necesario
+}
+
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -809,6 +833,7 @@ function createWindow() {
     height: 670,
     show: false,
     autoHideMenuBar: true,
+    icon : icon,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -852,7 +877,7 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
-  createWindow()
+  createSplashWindow();
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

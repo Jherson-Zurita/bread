@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, message, Select,Radio } from 'antd';
+import { Button, Table, message, Select, Radio } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
 const DataAdder = () => {
@@ -43,6 +43,55 @@ const DataAdder = () => {
         base_quantity: 8,
         base_unit: 'kg',
         estimated_time: 70
+      },
+      {
+        name: 'Baguette',
+        category: 'Bakery',
+        base_quantity: 5,
+        base_unit: 'units',
+        estimated_time: 80
+      },
+      {
+        name: 'Croissant',
+        category: 'Bakery',
+        base_quantity: 20,
+        base_unit: 'units',
+        estimated_time: 90
+      },
+      {
+        name: 'Pan de Ajo',
+        category: 'Bakery',
+        base_quantity: 3,
+        base_unit: 'kg',
+        estimated_time: 50
+      },
+      {
+        name: 'Pan de Maíz',
+        category: 'Bakery',
+        base_quantity: 4,
+        base_unit: 'kg',
+        estimated_time: 45
+      },
+      {
+        name: 'Focaccia',
+        category: 'Bakery',
+        base_quantity: 2,
+        base_unit: 'kg',
+        estimated_time: 40
+      },
+      {
+        name: 'Pan de Leche',
+        category: 'Bakery',
+        base_quantity: 6,
+        base_unit: 'kg',
+        estimated_time: 55
+      },
+      {
+        name: 'Rollos de Canela',
+        category: 'Bakery',
+        base_quantity: 12,
+        base_unit: 'units',
+        estimated_time: 75
       }
     ],
 
@@ -55,95 +104,547 @@ const DataAdder = () => {
       { name: 'Sal', current_stock: 50, unit: 'kg', min_stock: 10, alert_percentage: 10 },
       { name: 'Levadura Fresca', current_stock: 30, unit: 'kg', min_stock: 5, alert_percentage: 10 },
       { name: 'Azúcar', current_stock: 45, unit: 'kg', min_stock: 8, alert_percentage: 10 },
-      { name: 'Aceite', current_stock: 75, unit: 'l', min_stock: 15, alert_percentage: 10 }
+      { name: 'Aceite de Oliva', current_stock: 75, unit: 'l', min_stock: 15, alert_percentage: 10 },
+      { name: 'Leche', current_stock: 50, unit: 'l', min_stock: 10, alert_percentage: 10 },
+      { name: 'Mantequilla', current_stock: 20, unit: 'kg', min_stock: 5, alert_percentage: 10 },
+      { name: 'Huevos', current_stock: 120, unit: 'units', min_stock: 30, alert_percentage: 10 },
+      { name: 'Semillas de Sésamo', current_stock: 25, unit: 'kg', min_stock: 5, alert_percentage: 10 },
+      { name: 'Frutas Secas', current_stock: 15, unit: 'kg', min_stock: 3, alert_percentage: 10 },
+      { name: 'Especias (canela, nuez moscada)', current_stock: 10, unit: 'kg', min_stock: 2, alert_percentage: 10 }
+    ],
+
+    // Relaciones entre recetas e ingredientes
+    recipe_ingredients: [
+      { recipe_id: 1, ingredient_id: 1, quantity: 1.5, unit: 'kg' }, // Pan Blanco
+      { recipe_id: 1, ingredient_id: 4, quantity: 0.5, unit: 'l' },  // Agua
+      { recipe_id: 1, ingredient_id: 5, quantity: 0.02, unit: 'kg' }, // Sal
+      { recipe_id: 1, ingredient_id: 6, quantity: 0.05, unit: 'kg' }, // Levadura Fresca
+      { recipe_id: 2, ingredient_id: 1, quantity: 1.5, unit: 'kg' }, // Pan Integral
+      { recipe_id: 2, ingredient_id: 4, quantity: 0.5, unit: 'l' },  // Agua
+      { recipe_id: 2, ingredient_id: 5, quantity: 0.02, unit: 'kg' }, // Sal
+      { recipe_id: 2, ingredient_id: 6, quantity: 0.05, unit: 'kg' }, // Levadura Fresca
+      { recipe_id: 3, ingredient_id: 1, quantity: 1.2, unit: 'kg' }, // Pan de Centeno
+      { recipe_id: 3, ingredient_id: 4, quantity: 0.4, unit: 'l' },  // Agua
+      { recipe_id: 3, ingredient_id: 5, quantity: 0.015, unit: 'kg' }, // Sal
+      { recipe_id: 3, ingredient_id: 6, quantity: 0.04, unit: 'kg' }, // Levadura Fresca
+      { recipe_id: 4, ingredient_id: 1, quantity: 0.8, unit: 'kg' }, // Baguette
+      { recipe_id: 4, ingredient_id: 4, quantity: 0.25, unit: 'l' }, // Agua
+      { recipe_id: 4, ingredient_id: 5, quantity: 0.01, unit: 'kg' }, // Sal
+      { recipe_id: 4, ingredient_id: 6, quantity: 0.03, unit: 'kg' }, // Levadura Fresca
+      { recipe_id: 5, ingredient_id: 1, quantity: 0.5, unit: 'kg' }, // Croissant
+      { recipe_id: 5, ingredient_id: 4, quantity: 0.15, unit: 'l' }, // Agua
+      { recipe_id: 5, ingredient_id: 5, quantity: 0.005, unit: 'kg' }, // Sal
+      { recipe_id: 5, ingredient_id: 6, quantity: 0.02, unit: 'kg' }, // Levadura Fresca
+      { recipe_id: 6, ingredient_id: 1, quantity: 1.0, unit: 'kg' }, // Pan de Ajo
+      { recipe_id: 6, ingredient_id: 4, quantity: 0.3, unit: 'l' },  // Agua
+      { recipe_id: 6, ingredient_id: 5, quantity: 0.01, unit: 'kg' }, // Sal
+      { recipe_id: 6, ingredient_id: 6, quantity: 0.03, unit: 'kg' }, // Levadura Fresca
+      { recipe_id: 7, ingredient_id: 1, quantity: 1.2, unit: 'kg' }, // Pan de Maíz
+      { recipe_id: 7, ingredient_id: 4, quantity: 0.4, unit: 'l' },  // Agua
+      { recipe_id: 7, ingredient_id: 5, quantity: 0.02, unit: 'kg' }, // Sal
+      { recipe_id: 7, ingredient_id: 6, quantity: 0.04, unit: 'kg' }, // Levadura Fresca
+      { recipe_id: 8, ingredient_id: 1, quantity: 1.0, unit: 'kg' }, // Focaccia
+      { recipe_id: 8, ingredient_id: 4, quantity: 0.3, unit: 'l' },  // Agua
+      { recipe_id: 8, ingredient_id: 5, quantity: 0.01, unit: 'kg' }, // Sal
+      { recipe_id: 8, ingredient_id: 6, quantity: 0.03, unit: 'kg' }, // Levadura Fresca
+      { recipe_id: 9, ingredient_id: 1, quantity: 1.5, unit: 'kg' }, // Pan de Oliva
+      { recipe_id: 9, ingredient_id: 4, quantity: 0.5, unit: 'l' },  // Agua
+      { recipe_id: 9, ingredient_id: 5, quantity: 0.02, unit: 'kg' }, // Sal
+      { recipe_id: 9, ingredient_id: 6, quantity: 0.05, unit: 'kg' }, // Levadura Fresca
+      { recipe_id: 10, ingredient_id: 1, quantity: 1.0, unit: 'kg' }, // Pan de Semillas
+      { recipe_id: 10, ingredient_id: 4, quantity: 0.3, unit: 'l' },  // Agua
+      { recipe_id: 10, ingredient_id: 5, quantity: 0.01, unit: 'kg' }, // Sal
+      { recipe_id: 10, ingredient_id: 6, quantity: 0.03, unit: 'kg' }  // Levadura Fresca
     ],
 
     // Operadores de producción
-    operator: [
-      { name: 'Juan Pérez', active: true },
-      { name: 'María García', active: true },
-      { name: 'Carlos Rodríguez', active: true },
-      { name: 'Ana Martínez', active: false }
+    operators: [
+      { id: 1, name: 'Juan Pérez', active: true },
+      { id: 2, name: 'María López', active: true },
+      { id: 3, name: 'Carlos García', active: true },
+      { id: 4, name: 'Ana Martínez', active: true },
+      { id: 5, name: 'Luis Fernández', active: false }, // Este operador no está activo
+      { id: 6, name: 'Sofía Rodríguez', active: true },
+      { id: 7, name: 'Pedro Sánchez', active: true },
+      { id: 8, name: 'Lucía Torres', active: true },
+      { id: 9, name: 'Javier Romero', active: false }, // Este operador no está activo
+      { id: 10, name: 'Claudia Morales', active: true }
     ],
 
     // Líneas de producción
-    productionLine: [
-      { name: 'Línea Pan Blanco', active: true },
-      { name: 'Línea Pan Integral', active: true },
-      { name: 'Línea Especialidades', active: true },
-      { name: 'Línea Temporal', active: false }
+    production_lines: [
+      { id: 1, name: 'Línea de Panadería', active: true },
+      { id: 2, name: 'Línea de Pastelería', active: true },
+      { id: 3, name: 'Línea de Bollería', active: true },
+      { id: 4, name: 'Línea de Galletas', active: true },
+      { id: 5, name: 'Línea de Pan Sin Gluten', active: false }, // Esta línea no está activa
+      { id: 6, name: 'Línea de Pan Artesanal', active: true },
+      { id: 7, name: 'Línea de Productos Congelados', active: true },
+      { id: 8, name: 'Línea de Productos Especiales', active: true },
+      { id: 9, name: 'Línea de Salsas y Rellenos', active: false }, // Esta línea no está activa
+      { id: 10, name: 'Línea de Decoración', active: true }
     ],
 
     // Procesos de producción
-    productionProcess: [
+    production_processes: [
       {
-        batch_number: 'B001',
-        quantity: 100,
+        id: 1,
+        batch_number: 'BATCH001',
+        recipe_id: 1,
+        operator_id: 2,
+        line_id: 1,
+        quantity: 100.00,
         unit: 'kg',
-        status: 'En progreso',
-        priority: 'alta',
-        temperature: 22.5,
-        humidity: 65.0
+        start_time: '2023-10-01 08:00:00',
+        estimated_end_time: '2023-10-01 12:00:00',
+        actual_end_time: null,
+        status: 'in_progress',
+        progress: 50,
+        priority: 'normal',
+        temperature: 25.00,
+        humidity: 60.00,
+        created_at: '2023-10-01 07:45:00'
       },
       {
-        batch_number: 'B002',
-        quantity: 80,
+        id: 2,
+        batch_number: 'BATCH002',
+        recipe_id: 2,
+        operator_id: 3,
+        line_id: 2,
+        quantity: 50.00,
         unit: 'kg',
-        status: 'Pendiente',
-        priority: 'normal',
-        temperature: 23.0,
-        humidity: 63.5
+        start_time: '2023-10-01 09:00:00',
+        estimated_end_time: '2023-10-01 13:00:00',
+        actual_end_time: null,
+        status: 'in_progress',
+        progress: 30,
+        priority: 'high',
+        temperature: 22.00,
+        humidity: 55.00,
+        created_at: '2023-10-01 08:30:00'
       },
       {
-        batch_number: 'B003',
-        quantity: 120,
+        id: 3,
+        batch_number: 'BATCH003',
+        recipe_id: 3,
+        operator_id: 1,
+        line_id: 3,
+        quantity: 75.00,
         unit: 'kg',
-        status: 'Completado',
+        start_time: '2023-10-01 10:00:00',
+        estimated_end_time: '2023-10-01 14:00:00',
+        actual_end_time: null,
+        status: 'not_started',
+        progress: 0,
+        priority: 'low',
+        temperature: 24.00,
+        humidity: 65.00,
+        created_at: '2023-10-01 09:00:00'
+      },
+      {
+        id: 4,
+        batch_number: 'BATCH004',
+        recipe_id: 4,
+        operator_id: 4,
+        line_id: 4,
+        quantity: 30.00,
+        unit: 'kg',
+        start_time: '2023-10-01 11:00:00',
+        estimated_end_time: '2023-10-01 15:00:00',
+        actual_end_time: null,
+        status: 'in_progress',
+        progress: 10,
         priority: 'normal',
-        temperature: 22.0,
-        humidity: 64.0
+        temperature: 23.00,
+        humidity: 70.00,
+        created_at: '2023-10-01 10:30:00'
+      },
+      {
+        id: 5,
+        batch_number: 'BATCH005',
+        recipe_id: 5,
+        operator_id: 6,
+        line_id: 5,
+        quantity: 20.00,
+        unit: 'kg',
+        start_time: '2023-10-01 12:00:00',
+        estimated_end_time: '2023-10-01 16:00:00',
+        actual_end_time: null,
+        status: 'not_started',
+        progress: 0,
+        priority: 'high',
+        temperature: 26.00,
+        humidity: 50.00,
+        created_at: '2023-10-01 11:00:00'
       }
     ],
 
     // Pasos del proceso para cada receta
-    processSteps: [
-      { recipe_id: 1, step_number: 1, title: 'Mezclar ingredientes', description: 'Mezclar harina, sal y levadura', estimated_time: 10 },
-      { recipe_id: 1, step_number: 2, title: 'Amasar', description: 'Amasar hasta punto de desarrollo', estimated_time: 15 },
-      { recipe_id: 1, step_number: 3, title: 'Primera fermentación', description: 'Dejar reposar masa', estimated_time: 30 },
-      { recipe_id: 1, step_number: 4, title: 'División y formado', description: 'Dividir y dar forma', estimated_time: 20 },
-      { recipe_id: 1, step_number: 5, title: 'Segunda fermentación', description: 'Fermentación final', estimated_time: 45 },
-      { recipe_id: 1, step_number: 6, title: 'Horneado', description: 'Hornear a 220°C', estimated_time: 35 }
+    process_steps: [
+      {
+        id: 1,
+        recipe_id: 1,
+        step_number: 1,
+        title: 'Mezclar Ingredientes Secos',
+        description: 'Combinar harina, azúcar, sal y levadura en un tazón grande.',
+        estimated_time: 10 // en minutos
+      },
+      {
+        id: 2,
+        recipe_id: 1,
+        step_number: 2,
+        title: 'Agregar Ingredientes Líquidos',
+        description: 'Añadir agua y aceite a la mezcla de ingredientes secos y mezclar bien.',
+        estimated_time: 5 // en minutos
+      },
+      {
+        id: 3,
+        recipe_id: 1,
+        step_number: 3,
+        title: 'Amasar la Masa',
+        description: 'Amasar la mezcla durante al menos 10 minutos hasta que esté suave y elástica.',
+        estimated_time: 10 // en minutos
+      },
+      {
+        id: 4,
+        recipe_id: 1,
+        step_number: 4,
+        title: 'Fermentar la Masa',
+        description: 'Dejar reposar la masa en un lugar cálido durante 1 hora o hasta que duplique su tamaño.',
+        estimated_time: 60 // en minutos
+      },
+      {
+        id: 5,
+        recipe_id: 2,
+        step_number: 1,
+        title: 'Preparar la Base',
+        description: 'Batir los huevos y el azúcar hasta obtener una mezcla cremosa.',
+        estimated_time: 5 // en minutos
+      },
+      {
+        id: 6,
+        recipe_id: 2,
+        step_number: 2,
+        title: 'Agregar Harina y Levadura',
+        description: 'Incorporar la harina y la levadura en polvo a la mezcla de huevos y azúcar.',
+        estimated_time: 5 // en minutos
+      },
+      {
+        id: 7,
+        recipe_id: 2,
+        step_number: 3,
+        title: 'Hornear',
+        description: 'Verter la mezcla en un molde y hornear a 180°C durante 30 minutos.',
+        estimated_time: 30 // en minutos
+      },
+      {
+        id: 8,
+        recipe_id: 3,
+        step_number: 1,
+        title: 'Derretir Mantequilla',
+        description: 'Derretir la mantequilla en una cacerola a fuego bajo.',
+        estimated_time: 5 // en minutos
+      },
+      {
+        id: 9,
+        recipe_id: 3,
+        step_number: 2,
+        title: 'Mezclar Ingredientes',
+        description: 'Combinar la mantequilla derretida con el azúcar y los huevos, luego agregar la harina.',
+        estimated_time: 10 // en minutos
+      },
+      {
+        id: 10,
+        recipe_id: 3,
+        step_number: 3,
+        title: 'Hornear Galletas',
+        description: 'Formar bolitas y hornear a 180°C durante 12 minutos.',
+        estimated_time: 12 // en minutos
+      }
     ],
 
     // Eventos del proceso
-    processEvents: [
-      { process_id: 1, event_time: new Date(), description: 'Inicio de producción', status: 'success' },
-      { process_id: 1, event_time: new Date(), description: 'Mezcla completada', status: 'success' },
-      { process_id: 1, event_time: new Date(), description: 'Primera fermentación iniciada', status: 'success' }
+    process_events: [
+      {
+        id: 1,
+        process_id: 1,
+        event_time: '2023-10-01 08:00:00',
+        description: 'Inicio del proceso de producción para el lote BATCH001.',
+        status: 'success'
+      },
+      {
+        id: 2,
+        process_id: 1,
+        event_time: '2023-10-01 08:30:00',
+        description: 'Mezcla de ingredientes completada.',
+        status: 'success'
+      },
+      {
+        id: 3,
+        process_id: 1,
+        event_time: '2023-10-01 09:00:00',
+        description: 'Amasado de la masa completado.',
+        status: 'success'
+      },
+      {
+        id: 4,
+        process_id: 1,
+        event_time: '2023-10-01 09:05:00',
+        description: 'La masa ha comenzado a fermentar.',
+        status: 'success'
+      },
+      {
+        id: 5,
+        process_id: 2,
+        event_time: '2023-10-01 09:00:00',
+        description: 'Inicio del proceso de producción para el lote BATCH002.',
+        status: 'success'
+      },
+      {
+        id: 6,
+        process_id: 2,
+        event_time: '2023-10-01 09:30:00',
+        description: 'Preparación de la base completada.',
+        status: 'success'
+      },
+      {
+        id: 7,
+        process_id: 2,
+        event_time: '2023-10-01 09:35:00',
+        description: 'Horneado iniciado.',
+        status: 'success'
+      },
+      {
+        id: 8,
+        process_id: 3,
+        event_time: '2023-10-01 10:00:00',
+        description: 'Inicio del proceso de producción para el lote BATCH003.',
+        status: 'success'
+      },
+     {
+        id: 9,
+        process_id: 3,
+        event_time: '2023-10-01 10:05:00',
+        description: 'Mantequilla derretida y lista para mezclar.',
+        status: 'success'
+      },
+      {
+        id: 10,
+        process_id: 3,
+        event_time: '2023-10-01 10:15:00',
+        description: 'Ingredientes combinados y mezcla lista.',
+        status: 'success'
+      },
+      {
+        id: 11,
+        process_id: 3,
+        event_time: '2023-10-01 10:30:00',
+        description: 'Horneado de galletas completado.',
+        status: 'success'
+      },
+      {
+        id: 12,
+        process_id: 1,
+        event_time: '2023-10-01 10:00:00',
+        description: 'La masa ha duplicado su tamaño y está lista para ser horneada.',
+        status: 'success'
+      }
     ],
 
     // Controles de calidad
-    qualityChecks: [
-      { process_id: 1, parameter: 'Temperatura masa', value: '24', unit: '°C', status: 'success' },
-      { process_id: 1, parameter: 'pH masa', value: '5.2', unit: 'pH', status: 'success' },
-      { process_id: 1, parameter: 'Humedad ambiente', value: '65', unit: '%', status: 'success' }
+    quality_checks: [
+      {
+        id: 1,
+        process_id: 1,
+        parameter: 'Temperatura de la masa',
+        value: '25.00',
+        unit: '°C',
+        status: 'pass',
+        check_time: '2023-10-01 08:15:00'
+      },
+      {
+        id: 2,
+        process_id: 1,
+        parameter: 'Humedad de la masa',
+        value: '60.00',
+        unit: '%',
+        status: 'pass',
+        check_time: '2023-10-01 08:15:00'
+      },
+      {
+        id: 3,
+        process_id: 2,
+        parameter: 'Tiempo de horneado',
+        value: '30',
+        unit: 'minutos',
+        status: 'pass',
+        check_time: '2023-10-01 09:45:00'
+      },
+      {
+        id: 4,
+        process_id: 2,
+        parameter: 'Temperatura del horno',
+        value: '180.00',
+        unit: '°C',
+        status: 'fail',
+        check_time: '2023-10-01 09:35:00'
+      },
+      {
+        id: 5,
+        process_id: 3,
+        parameter: 'Consistencia de la masa',
+        value: 'Suave y elástica',
+        unit: null,
+        status: 'pass',
+        check_time: '2023-10-01 10:10:00'
+      },
+      {
+        id: 6,
+        process_id: 3,
+        parameter: 'Tamaño de la masa',
+        value: 'Duplicado',
+        unit: null,
+        status: 'pass',
+        check_time: '2023-10-01 10:10:00'
+      },
+      {
+        id: 7,
+        process_id: 1,
+        parameter: 'Tiempo de fermentación',
+        value: '60',
+        unit: 'minutos',
+        status: 'pass',
+        check_time: '2023-10-01 09:00:00'
+      },
+      {
+        id: 8,
+        process_id: 2,
+        parameter: 'Color de la base',
+        value: 'Dorado',
+        unit: null,
+        status: 'pass',
+        check_time: '2023-10-01 10:00:00'
+      },
+      {
+        id: 9,
+        process_id: 1,
+        parameter: 'Aroma',
+        value: 'Agradable',
+        unit: null,
+        status: 'pass',
+        check_time: '2023-10-01 10:00:00'
+      },
+      {
+        id: 10,
+        process_id: 3,
+        parameter: 'Sabor',
+        value: 'Delicioso',
+        unit: null,
+        status: 'pass',
+        check_time: '2023-10-01 10:35:00'
+      }
     ],
 
     // Ingredientes para cada proceso
-    processIngredients: [
-      { process_id: 1, ingredient_id: 1, required_quantity: 60, used_quantity: 60, unit: 'kg', status: 'completed' },
-      { process_id: 1, ingredient_id: 4, required_quantity: 36, used_quantity: 36, unit: 'l', status: 'completed' },
-      { process_id: 1, ingredient_id: 5, required_quantity: 1.2, used_quantity: 1.2, unit: 'kg', status: 'completed' },
-      { process_id: 1, ingredient_id: 6, required_quantity: 1.8, used_quantity: 1.8, unit: 'kg', status: 'completed' }
+    process_ingredients: [
+      {
+        process_id: 1,
+        ingredient_id: 1, // ID de la harina
+        required_quantity: 1000.00,
+        used_quantity: 1000.00,
+        unit: 'g',
+        status: 'completed'
+      },
+      {
+        process_id: 1,
+        ingredient_id: 2, // ID del azúcar
+        required_quantity: 200.00,
+        used_quantity: 200.00,
+        unit: 'g',
+        status: 'completed'
+      },
+      {
+        process_id: 1,
+        ingredient_id: 3, // ID de la sal
+        required_quantity: 10.00,
+        used_quantity: 10.00,
+        unit: 'g',
+        status: 'completed'
+      },
+      {
+        process_id: 1,
+        ingredient_id: 4, // ID de la levadura
+        required_quantity: 7.00,
+        used_quantity: 7.00,
+        unit: 'g',
+        status: 'completed'
+      },
+      {
+        process_id: 2,
+        ingredient_id: 5, // ID de los huevos
+        required_quantity: 4.00,
+        used_quantity: 4.00,
+        unit: 'unidades',
+        status: 'completed'
+      },
+      {
+        process_id: 2,
+        ingredient_id: 6, // ID de la mantequilla
+        required_quantity: 150.00,
+        used_quantity: 150.00,
+        unit: 'g',
+        status: 'completed'
+      },
+      {
+        process_id: 2,
+        ingredient_id: 7, // ID de la harina
+        required_quantity: 250.00,
+        used_quantity: 250.00,
+        unit: 'g',
+        status: 'completed'
+      },
+      {
+        process_id: 3,
+        ingredient_id: 8, // ID de la mantequilla
+        required_quantity: 100.00,
+        used_quantity: 100.00,
+        unit: 'g',
+        status: 'completed'
+      },
+      {
+        process_id: 3,
+        ingredient_id: 9, // ID del azúcar
+        required_quantity: 200.00,
+        used_quantity: 200.00,
+        unit: 'g',
+        status: 'completed'
+      },
+      {
+        process_id: 3,
+        ingredient_id: 10, // ID de la harina
+        required_quantity: 300.00,
+        used_quantity: 300.00,
+        unit: 'g',
+        status: 'completed'
+      },
+      {
+        process_id: 3,
+        ingredient_id: 11, // ID de la levadura
+        required_quantity: 5.00,
+        used_quantity: 5.00,
+        unit: 'g',
+        status: 'completed'
+      },
+      {
+        process_id: 1,
+        ingredient_id: 12, // ID del agua
+        required_quantity: 600.00,
+        used_quantity: 600.00,
+        unit: 'ml',
+        status: 'completed'
+      }
     ],
 
-    // Relaciones entre recetas e ingredientes
-    recipeIngredients: [
-      { recipe_id: 1, ingredient_id: 1, quantity: 10, unit: 'kg' },
-      { recipe_id: 1, ingredient_id: 4, quantity: 6, unit: 'l' },
-      { recipe_id: 1, ingredient_id: 5, quantity: 0.2, unit: 'kg' },
-      { recipe_id: 1, ingredient_id: 6, quantity: 0.3, unit: 'kg' }
-    ]
   };
 
   // Función para añadir datos automáticamente a las tablas
@@ -160,42 +661,42 @@ const DataAdder = () => {
       }
 
       // Añadir operadores
-      for (const operator of sampleData.operator) {
+      for (const operator of sampleData.operators) {
         await window.api.database.addOperator(operator);
       }
 
       // Añadir líneas de producción
-      for (const line of sampleData.productionLine) {
+      for (const line of sampleData.production_lines) {
         await window.api.database.addProductionLine(line);
       }
 
       // Añadir procesos de producción
-      for (const process of sampleData.productionProcess) {
+      for (const process of sampleData.production_processes) {
         await window.api.database.addProductionProcess(process);
       }
 
       // Añadir pasos del proceso
-      for (const processStep of sampleData.processSteps) {
+      for (const processStep of sampleData.process_steps) {
         await window.api.database.addProcessStep(processStep);
       }
 
       // Añadir eventos del proceso
-      for (const event of sampleData.processEvents) {
+      for (const event of sampleData.process_events) {
         await window.api.database.addProcessEvent(event);
       }
 
       // Añadir controles de calidad
-      for (const check of sampleData.qualityChecks) {
+      for (const check of sampleData.quality_checks) {
         await window.api.database.addQualityCheck(check);
       }
 
       // Añadir ingredientes del proceso
-      for (const ingredient of sampleData.processIngredients) {
+      for (const ingredient of sampleData.process_ingredients) {
         await window.api.database.addProcessIngredient(ingredient);
       }
 
       // Añadir relaciones entre recetas e ingredientes
-      for (const recipeIngredient of sampleData.recipeIngredients) {
+      for (const recipeIngredient of sampleData.recipe_ingredients) {
         await window.api.database.addRecipeIngredient(recipeIngredient);
       }
 
@@ -461,7 +962,7 @@ const DataAdder = () => {
         />
       </div>
     </div>
-);
+  );
 };
 
 export default DataAdder;
